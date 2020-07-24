@@ -6,21 +6,20 @@
         <br>
         <b-link href="#/add-room">(Add Room)</b-link>
       </h2>
-      <b-table striped hover :items="rooms" :fields="fieldsarr">
-        <template v-slot:cell(actions)="data" >
-          <button size="sm" @click.stop="join(data)">Join</button>
+       <button @click="getAllUserJointRooms">test</button>
+       <button @click="testSetUserid">testSetUserid</button>
+
+      <b-table striped hover :items="allRooms" :fields="fieldsarr">
+        <template v-slot:cell(actions)="roomInfo" >
+          <button size="sm" @click.stop="joinRoom(roomInfo)">Join</button>
         </template>
       </b-table>
-      <!-- <ul v-if="errors && errors.length">
-        <li v-for="(error,index) of errors" :key="index">
-          {{error.message}}
-        </li>
-      </ul> -->
     </b-col>
   </b-row>
 </template>
 
 <script>
+import { getUserid, setUserid } from './storage'
 export default {
   name: 'RoomList',
   data () {
@@ -29,7 +28,7 @@ export default {
       fieldsarr: [
        'created_date','room_name','actions'
       ],
-      rooms: [],
+      allRooms: [],
       errors: []
     }
   },
@@ -37,19 +36,45 @@ export default {
     axios.get(`http://localhost:3000/api/room`)
     .then(response => {
         // console.log(response);
-      this.rooms = response.data
+      this.allRooms = response.data
     })
     .catch(e => {
       this.errors.push(e)
     })
   },
   methods: {
-    join (data) {
-      const id=data._id
-      this.$router.push({
-        name: 'Joinroom',
-        params: { id: id }
+    testSetUserid () {
+      setUserid('wang')
+    },
+    getAllUserJointRooms() {
+      const userid = 'wang'
+      axios.get(`http://localhost:3000/api/room`, {
+        params: {
+          userid: userid
+        }
       })
+    },
+    joinRoom (room) {
+      console.log(room)
+      const id=room.item._id
+      const userid = 'wang'
+      axios.post(`http://localhost:3000/api/room/join/${id}`, {}, {
+        params: {
+          userid: userid
+        }
+      }).then(data => {
+        const roomInfo = data.data
+        console.log('roomInfo', roomInfo)
+        const roomId = roomInfo._id
+        location.hash = `#/chat-room/${roomId}`
+        // this.$router.push({
+        //   name: 'Chatroom',
+        // })
+      })
+      // this.$router.p.ush({
+      //   name: 'Joinroom',
+      //   params: { id: id }
+      // })
     }
   }
 }

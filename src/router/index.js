@@ -8,7 +8,7 @@ import Chatroom from '@/components/Chatroom'
 Vue.use(Router)
 
 export default new Router({
-  mode:'history',
+  mode:'hash',
   routes: [
     {
       path: '/',
@@ -26,7 +26,7 @@ export default new Router({
       component: Joinroom
     },
     {
-      path: '/chat-room/:id/:nickname',
+      path: '/chat-room/:roomid',
       name: 'Chatroom',
       component: Chatroom
     },

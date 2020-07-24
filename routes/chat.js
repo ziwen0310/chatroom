@@ -14,15 +14,23 @@ router.get('/', function(req, res, next) {
 });
 
 /* GET SINGLE CHAT BY ID */
-router.get('/:id', function(req, res, next) {
-  Chat.findById(req.params.id, function (err, post) {
-    if (err) return next(err);
-    res.json(post);
-  });
+router.get('/:roomid', function(req, res, next) {
+  // Chat.findById(req.params.roomid, function (err, post) {
+  //   if (err) return next(err);
+  //   res.json(post || []);
+  // });
+    Chat.find({
+      room:req.params.roomid
+    },function(err,chats){
+      if (err) return next(err);
+      // console.log(chats)
+      res.json(chats)
+    })
 });
 
 /* SAVE CHAT */
 router.post('/', function(req, res, next) {
+  console.log('TESTTHIS',req.body);
   Chat.create(req.body, function (err, post) {
     if (err) return next(err);
     res.json(post);
@@ -46,15 +54,18 @@ router.delete('/:id', function(req, res, next) {
 });
 server.listen(4000);
 
-// socket io
+// socket io ADD CHAT
 io.on('connection', function (socket) {
   console.log('User connected');
   socket.on('disconnect', function() {
     console.log('User disconnected');
   });
   socket.on('save-message', function (data) {
-    console.log(data);
-    io.emit('new-message', { message: data });
+    console.log('message',data);
+    //broadcast to all users in the room
+    Chat.create(data, function (err, post) {
+      io.emit('new-message', { message: post });
+    });
   });
 });
 module.exports = router;

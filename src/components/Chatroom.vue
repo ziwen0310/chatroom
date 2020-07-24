@@ -1,5 +1,5 @@
 <template>
-  <b-row>
+  <b-row class="chatroom">
     <b-col cols="12">
       <h2>
         Chat Room
@@ -7,7 +7,7 @@
       <b-list-group class="panel-body v-chat-scroll">
         <b-list-group-item v-for="(item, index) in chats" class="chat">
           <div class="left clearfix" v-if="item.nickname === nickname">
-            <b-img left src="http://placehold.it/50/55C1E7/fff&text=ME" rounded="circle" width="75" height="75" alt="img" class="m-1" />
+            <b-img left src="http://placehold.it/50/55C1E7/fff&text=ME" rounded="circle" width="74" height="74" alt="img" class="m-1" />
             <div class="chat-body clearfix">
               <div class="header">
                 <strong class="primary-font">{{ item.nickname }}</strong> <small class="pull-right text-muted">
@@ -17,7 +17,7 @@
             </div>
           </div>
           <div class="right clearfix" v-else>
-            <b-img right src="http://placehold.it/50/55C1E7/fff&text=U" rounded="circle" width="75" height="75" alt="img" class="m-1" />
+            <b-img right src="http://placehold.it/50/55C1E7/fff&text=U" rounded="circle" width="74" height="74" alt="img" class="m-1" />
             <div class="chat-body clearfix">
               <div class="header">
                 <strong class="primary-font">{{ item.nickname }}</strong> <small class="pull-right text-muted">
@@ -33,6 +33,7 @@
           {{error.message}}
         </li>
       </ul>
+      <!-- bind input data -->
       <b-form @submit="onSubmit" class="chat-form">
         <b-input-group prepend="Message">
           <b-form-input id="message" :state="state" v-model.trim="chat.message"></b-form-input>
@@ -46,7 +47,7 @@
 </template>
 
 <script>
-
+import { getUserid, setUserid } from './storage'
 import axios from 'axios'
 import Vue from 'vue'
 import * as io from 'socket.io-client'
@@ -60,12 +61,17 @@ data () {
     chats: [],
     errors: [],
     nickname: this.$route.params.nickname,
-    chat: {},
+    chat: {
+
+    },
     socket: io('http://localhost:4000')
   }
 },
+//fetch chat message and display
 created () {
-  axios.get(`http://localhost:3000/api/chat/` + this.$route.params.id)
+  const hash = location.hash
+  const roomId = hash.substr(12)
+  axios.get(`http://localhost:3000/api/chat/${roomId}` )
   .then(response => {
     this.chats = response.data
   })
@@ -74,7 +80,7 @@ created () {
   })
 
   this.socket.on('new-message', function (data) {
-    if(data.message.room === this.$route.params.id) {
+    if(data.message.room === roomId) {
       this.chats.push(data.message)
     }
   }.bind(this))
@@ -88,44 +94,51 @@ methods: {
   },
   onSubmit (evt) {
     evt.preventDefault()
-    this.chat.room = this.$route.params.id
-    this.chat.nickname = this.$route.params.nickname
-    axios.post(`http://localhost:3000/api/chat`, this.chat)
-    .then(response => {
-      this.socket.emit('save-message', response.data)
-      this.chat.message = ''
-    })
-    .catch(e => {
-      this.errors.push(e)
-    })
+    const hash = location.hash
+    const roomId = hash.substr(12)
+    this.chat.room = roomId
+    this.chat.nickname = getUserid()
+    this.socket.emit('save-message', this.chat)
+    this.chat.message = ''
+    // axios.post(`http://localhost:3000/api/chat`, this.chat)
+    // .then(response => {
+    //   this.socket.emit('save-message', response.data)
+    //   this.chat.message = ''
+    // })
+    // .catch(e => {
+    //   this.errors.push(e)
+    // })
   }
 }
 }
 </script>
 
 <style>
-  .chat .left .chat-body {
-    text-align: left;
-    margin-left: 100px;
-  }
-
-  .chat .right .chat-body {
-    text-align: right;
-    margin-right: 100px;
-  }
-
+   .chatroom {
+     /* height:100vh; */
+   }
   .chat .chat-body p {
     margin: 0;
     color: #777777;
   }
+  .chat .left .chat-body {
+    text-align: left;
+    margin-left: 95px;
+  }
+
+  .chat .right .chat-body {
+    text-align: right;
+    margin-right: 95px;
+  }
+
 
   .panel-body {
     overflow-y: scroll;
-    height: 350px;
+    height: calc(100vh - 200px);
   }
 
   .chat-form {
-    margin: 20px auto;
-    width: 80%;
+    margin: 19px auto;
+    width: 79%;
   }
 </style>
